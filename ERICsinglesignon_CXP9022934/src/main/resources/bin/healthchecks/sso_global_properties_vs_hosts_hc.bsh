@@ -1,0 +1,50 @@
+#!/bin/bash
+
+##
+## Copyright (c) 2011 Ericsson AB, 2010 - 2011.
+##
+## All Rights Reserved. Reproduction in whole or in part is prohibited
+## without the written consent of the copyright owner.
+##
+## ERICSSON MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE
+## SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+## BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+## FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. ERICSSON
+## SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A
+## RESULT OF USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS
+## DERIVATIVES.
+##
+## This script checks whether sso global properties files is in sunch with /etc/hosts file
+
+. /opt/ericsson/sso/bin/healthchecks/healthcheck_common.bsh
+
+SCRIPT_NAME=`${BASENAME} ${0}`
+
+HOSTS=/etc/hosts
+LDAP_FLAG=0
+UI_FLAG=0
+SSO_COOKIE_DOMAIN_FLAG=0
+
+
+if [[  $(${GREP} ${COM_INF_LDAP_HOST_1} ${HOSTS} >/dev/null 2>&1) ]]; then
+	error ${SCRIPT_NAME} "${COM_INF_LDAP_HOST_1} does not exist in ${HOSTS} file"
+	LDAP_FLAG=1
+fi
+
+if [[ $(${GREP} ${UI_PRES_SERVER} ${HOSTS} >/dev/null 2>&1) ]]; then
+	error ${SCRIPT_NAME} "${UI_PRES_SERVER} does not exist in ${HOSTS} file"
+	UI_FLAG=1
+fi
+
+if [[ $(${GREP} ${SSO_COOKIE_DOMAIN} ${HOSTS} >/dev/null 2>&1) ]]; then
+	error ${SCRIPT_NAME} "${SSO_COOKIE_DOMAIN} does not exist in ${HOSTS} file"
+    SSO_COOKIE_DOMAIN_FLAG=1
+fi
+
+if [[ LDAP_FLAG -eq 1 ||  UI_FLAG -eq 1 ||  SSO_COOKIE_DOMAIN_FLAG -eq 1 ]]; then
+	error ${SCRIPT_NAME} "${GLOBAL_PROPERTIES} file is not in synch with ${HOSTS} file"
+	exit 1
+else
+	info ${SCRIPT_NAME} "${GLOBAL_PROPERTIES} file is in synch with ${HOSTS} file"
+	exit 0 
+fi

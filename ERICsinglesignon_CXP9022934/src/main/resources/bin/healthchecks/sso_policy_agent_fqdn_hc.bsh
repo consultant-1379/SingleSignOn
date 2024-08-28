@@ -1,0 +1,45 @@
+#!/bin/bash
+
+##
+## Copyright (c) 2011 Ericsson AB, 2010 - 2011.
+##
+## All Rights Reserved. Reproduction in whole or in part is prohibited
+## without the written consent of the copyright owner.
+##
+## ERICSSON MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE
+## SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+## BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+## FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. ERICSSON
+## SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A
+## RESULT OF USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS
+## DERIVATIVES.
+##
+
+. /opt/ericsson/sso/bin/healthchecks/healthcheck_common.bsh
+
+SCRIPT_NAME=`${BASENAME} ${0}`. /opt/ericsson/sso/bin/healthchecks/healthcheck_common.bsh
+
+LOCAL_PROPERTIES=/opt/ericsson/sso/etc/env-vars.conf
+. ${LOCAL_PROPERTIES}
+SSOADM=${SSO_SSOADM_HOME}/${SSO_DEPLOYMENT_NAME}/bin/ssoadm
+JAVA_HOME=${SSO_INSTALL_JAVA_HOME}
+SSO_ADMIN_NAME=amadmin
+FQDN_DEFAULT=com.sun.identity.agents.config.fqdn.default
+
+
+## Extract the FQDN from PA configuration
+WEB_AGENT_NAME=$(${SSOADM} list-agents --realm ${REALM_NAME} --adminid ${SSO_ADMIN_NAME} --password-file ${AM_ACCESS_FILE} --agenttype WebAgent | ${AWK} '/agent/ {print $1}')
+FQDN=$(${SSOADM} show-agent --realm ${REALM_NAME} --adminid ${SSO_ADMIN_NAME} --password-file ${AM_ACCESS_FILE} --agentname ${WEB_AGENT_NAME} | ${GREP} ${FQDN_DEFAULT} | ${AWK} -F= -v fqdn_dflt=${fqdn_default}  '$0 ~ fqdn_dflt {print $2}')
+
+if [[ -z ${FQDN} ]]; then
+	error ${SCRIPT_NAME} "Policy agent is not aware of the FQDN"
+	exit 1
+else
+	if [[ $(${GREP} ${FQDN} /etc/hosts >/dev/null 2>&1) ]]; then
+		error ${SCRIPT_NAME} "FQDN of Policy Agent is different from the one in /etc/hosts."
+		exit 1
+	else
+		info ${SCRIPT_NAME} "FQDN of Policy Agent is the same as in /etc/hosts."
+		exit 0
+	fi
+fi

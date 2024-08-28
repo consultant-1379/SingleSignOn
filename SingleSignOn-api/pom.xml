@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>ERICsinglesignon_CXP9022934</artifactId>
+		<groupId>com.ericsson.nms.sso</groupId>
+		<version>1.3.13-SNAPSHOT</version>
+	</parent>
+	<artifactId>ERICsinglesignon_CXP9022934-api</artifactId>
+	<name>[${project.parent.artifactId}] API module</name>
+
+	<properties>
+		<version.javax.validation>1.0.0.GA</version.javax.validation>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.jboss.as.plugins</groupId>
+				<artifactId>jboss-as-maven-plugin</artifactId>
+				<version>${version.jboss-as-maven-plugin}</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<!-- 
+				DO NOT DELETE THIS CONFIGURATION. IT CONTAINS SERVICE FRAMEWORK ANNOTATION 
+				PROCESSORS AND IS REQUIRED TO AUTOMATICALLY GENERATE ARTIFACTS REQUIRED BY 
+				SERVICE FRAMEWORK. 
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<compilerArguments>
+						<!-- if your EJB module is different modify line below accordingly -->
+						<AejbModuleName>${project.parent.artifactId}-ejb</AejbModuleName>
+						<!-- if your EAR module is different modify line below accordingly -->
+						<AservicePackageName>${project.parent.artifactId}-ear</AservicePackageName>
+						<AserviceVersion>${project.version}</AserviceVersion>
+					</compilerArguments>
+					<generatedSourcesDirectory>${project.basedir}/target/classes/sdk/</generatedSourcesDirectory>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<!-- 
+			DO NOT DELETE THIS DEPENDENCY. IT CONTAINS SERVICE FRAMEWORK ANNOTATION 
+			PROCESSORS AND IS REQUIRED TO AUTOMATICALLY GENERATE ARTIFACTS REQUIRED BY 
+			SERVICE FRAMEWORK. 
+		-->
+		<dependency>
+			<groupId>com.ericsson.oss.itpf.sdk</groupId>
+			<artifactId>sdk-maven-plugin</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.ericsson.oss.itpf.sdk</groupId>
+			<artifactId>sdk-config-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.ericsson.oss.itpf.sdk</groupId>
+			<artifactId>sdk-eventbus-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.ericsson.oss.itpf.sdk</groupId>
+			<artifactId>sdk-instrumentation-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.ericsson.oss.itpf.sdk</groupId>
+			<artifactId>sdk-tracing-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.validation</groupId>
+			<artifactId>validation-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.ericsson.oss.itpf.sdk</groupId>
+			<artifactId>sdk-modeled-eventbus-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.ericsson.oss.itpf.sdk</groupId>
+			<artifactId>sdk-cache-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.ericsson.oss.itpf.sdk</groupId>
+			<artifactId>sdk-cluster-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.ericsson.oss.itpf.sdk</groupId>
+			<artifactId>sdk-core-api</artifactId>
+		</dependency>
+	</dependencies>
+</project>

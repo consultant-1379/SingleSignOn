@@ -1,0 +1,6 @@
+UI_PRES_SERVER_1=atrcxbXXXX-X.athtem.eei.ericsson.se
+UI_PRES_SERVER_2=atrcxbXXXX-X.athtem.eei.ericsson.se
+SSO_COOKIE_DOMAIN=.ericsson.se
+COM_INF_LDAP_ROOT_SUFFIX=dc=atrcxbxxxx-xxxx,dc=com
+COM_INF_LDAP_ADMIN_CN="directory manager"
+COM_INF_LDAP_ADMIN_ACCESS=xxxx

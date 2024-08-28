@@ -1,0 +1,40 @@
+#!/bin/bash
+
+##
+## Copyright (c) 2011 Ericsson AB, 2010 - 2011.
+##
+## All Rights Reserved. Reproduction in whole or in part is prohibited
+## without the written consent of the copyright owner.
+##
+## ERICSSON MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE
+## SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+## BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+## FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. ERICSSON
+## SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A
+## RESULT OF USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS
+## DERIVATIVES.
+##
+## This script checks if the FQDN is resolvable either by DNS or by /etc/hosts file 
+
+. /opt/ericsson/sso/bin/healthchecks/healthcheck_common.bsh
+
+SCRIPT_NAME=`${BASENAME} ${0}`
+
+SSO_JBOSS_FQDN=$(${AWK} '/sso\./ {print $2}' /etc/hosts)
+APACHE_FQDN=${SSO_JBOSS_FQDN:4}
+
+info ${SCRIPT_NAME} "Looking up nameserver for ${APACHE_FQDN} ..."
+OUTPUT=$(host ${APACHE_FQDN})
+
+if [[ $(host ${APACHE_FQDN}) ]]; then
+        if [[ $(${GREP} $APACHE_FQDN /etc/hosts >/dev/null 2>&1) ]]; then
+		error ${SCRIPT_NAME} "$APACHE_FQDN is not resolvable."
+		exit 1	
+	else
+		info ${SCRIPT_NAME} "$APACHE_FQDN is resolvable through /etc/hosts file only."
+		exit 0
+	fi
+else
+	info ${SCRIPT_NAME} "$APACHE_FQDN is resolvable through nameserver."
+        exit 0
+fi

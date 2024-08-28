@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE Policies 
+PUBLIC "-//OpenSSO Policy Administration DTD//EN"
+"jar://com/sun/identity/policy/policyAdmin.dtd">
+
+<!-- extracted from realm, FREJA -->
+<Policies>
+	<Policy name="placeholder.policy.name" referralPolicy="false" active="true" >
+		<Rule name="placeholder.policy.rule.name">
+			<ServiceName name="iPlanetAMWebAgentService" />
+			<ResourceName name="placeholder.apache.agent.url" />
+			<ResourceName name="placeholder.apache.agent.url/*" />
+			<ResourceName name="placeholder.apache.agent.url/*?*" />
+			<AttributeValuePair>
+				<Attribute name="POST" />
+				<Value>allow</Value>
+			</AttributeValuePair>
+			<AttributeValuePair>
+				<Attribute name="GET" />
+				<Value>allow</Value>
+			</AttributeValuePair>
+			<AttributeValuePair>
+				<Attribute name="PUT" />
+				<Value>allow</Value>
+			</AttributeValuePair>
+			<AttributeValuePair>
+				<Attribute name="DELETE" />
+				<Value>allow</Value>
+			</AttributeValuePair>
+			<AttributeValuePair>
+				<Attribute name="INFO" />
+				<Value>allow</Value>
+			</AttributeValuePair>
+			<AttributeValuePair>
+				<Attribute name="STATUS" />
+				<Value>allow</Value>
+			</AttributeValuePair>
+		</Rule>
+		<Subjects name="" description="">
+			<Subject name="placeholder.policy.subject.name" type="AuthenticatedUsers" includeType="inclusive">
+			</Subject>
+		</Subjects>
+	</Policy>
+</Policies>

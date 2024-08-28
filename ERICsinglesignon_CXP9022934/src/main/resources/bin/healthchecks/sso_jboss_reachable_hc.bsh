@@ -1,0 +1,37 @@
+#!/bin/bash
+
+##
+## Copyright (c) 2011 Ericsson AB, 2010 - 2011.
+##
+## All Rights Reserved. Reproduction in whole or in part is prohibited
+## without the written consent of the copyright owner.
+##
+## ERICSSON MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE
+## SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+## BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+## FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. ERICSSON
+## SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A
+## RESULT OF USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS
+## DERIVATIVES.
+##
+## This script checks if SSO JBoss server is reachable
+
+. /opt/ericsson/sso/bin/healthchecks/healthcheck_common.bsh
+
+SCRIPT_NAME=`${BASENAME} ${0}`
+
+${CAT} /etc/hosts | ${GREP} \\ssso. >/dev/null 2>&1
+if [[ ${?} -eq 1 ]]; then
+        error ${SCRIPT_NAME} "Could not find JBoss entry in /etc/hosts file."
+        exit 1
+else
+        SSO_JBOSS=$(${AWK} '/sso\./ {print $2}' /etc/hosts)
+        ${CURL} -I -s http://${SSO_JBOSS}:8080 >/dev/null 2>&1
+	if [[ ${?} -ne 0 ]]; then
+		error ${SCRIPT_NAME} "SSO JBoss server is not http reachable."
+		exit 1
+	else
+		info ${SCRIPT_NAME} "SSO JBoss server is http reachable."
+		exit 0
+	fi
+fi

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE Policies 
+PUBLIC "-//OpenSSO Policy Administration DTD//EN"
+"jar://com/sun/identity/policy/policyAdmin.dtd">
+
+<!-- extracted from realm, / -->
+<Policies>
+	<Policy name="placeholder.referral.policy.name" referralPolicy="true" active="true" >
+		<Rule name="placeholder.referral.policy.rule.name">
+			<ServiceName name="iPlanetAMWebAgentService" />
+			<ResourceName name="placeholder.apache.agent.url" />
+			<ResourceName name="placeholder.apache.agent.url/*" />
+			<ResourceName name="placeholder.apache.agent.url/*?*" />
+		</Rule>
+		<Referrals name="" description="">
+			<Referral name="placeholder.referral.rule.name" type="SubOrgReferral">
+				<AttributeValuePair><Attribute name="Values"/>
+					<Value>placeholder.referral.value</Value>
+				</AttributeValuePair>
+			</Referral>
+		</Referrals>
+	</Policy>
+</Policies>

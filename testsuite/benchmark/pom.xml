@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>SingleSignOn-testsuite</artifactId>
+    <groupId>com.ericsson.nms.sso</groupId>
+    <version>1.5.46-SNAPSHOT</version>
+    <relativePath>..</relativePath>
+  </parent>
+  <artifactId>SingleSignOn-testsuite-benchmark</artifactId>
+  <name>[${project.parent.artifactId}] TestSuite Benchmark</name>
+  
+  <properties>
+  	<maven.test.skip>false</maven.test.skip>
+  </properties>
+  
+	<profiles>
+		<profile>
+			<id>activate_benchmark</id>
+			<activation>
+				<property><name>!ts.benchmark</name></property>
+			</activation>
+			<properties>
+				<maven.test.skip>true</maven.test.skip>
+			</properties>
+		</profile>
+	</profiles>
+</project>

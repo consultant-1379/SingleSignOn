@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<arquillian xmlns="http://jboss.org/schema/arquillian"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+	<defaultProtocol type="Servlet 3.0" />
+
+	<engine>
+		<property name="deploymentExportPath">target/arquillian</property>
+	</engine>
+
+	<container qualifier="jboss_managed" default="false">
+		<!-- SET JBOSS_HOME system property to location where your jboss is -->
+		<configuration>
+			<property name="jbossHome">${jboss.home}</property>
+			<property name="serverConfig">standalone.xml</property>
+		</configuration>
+	</container>
+
+	<container qualifier="jboss_remote" default="false">
+		<configuration>
+			<property name="managementAddress">127.0.0.1</property>
+			<property name="managementPort ">9999</property>
+			<property name="outputToConsole">true</property>
+			<property name="allowConnectingToRunningServer">true</property>
+		</configuration>
+	</container>
+
+	<container qualifier="glassfish_embedded" default="false" />
+
+
+	<container qualifier="glassfish_managed" default="false">
+		<configuration>
+			<property name="glassFishHome">${glassfish.home}</property>
+		</configuration>
+	</container>
+
+	<container qualifier="glassfish_remote" default="false">
+		<configuration>
+			<property name="target">server</property>
+			<!-- <property name="adminHost">127.0.0.1</property> -->
+			<!-- <property name="adminUser">admin</property> <property name="adminPassword">semafor</property> -->
+		</configuration>
+	</container>
+
+</arquillian>
+  

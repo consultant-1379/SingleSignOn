@@ -1,0 +1,43 @@
+#!/bin/bash
+
+##
+## Copyright (c) 2011 Ericsson AB, 2010 - 2011.
+##
+## All Rights Reserved. Reproduction in whole or in part is prohibited
+## without the written consent of the copyright owner.
+##
+## ERICSSON MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE
+## SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+## BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+## FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. ERICSSON
+## SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A
+## RESULT OF USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS
+## DERIVATIVES.
+##
+## This script check if the FQDN is in etc/hosts
+
+. /opt/ericsson/sso/bin/healthchecks/healthcheck_common.bsh
+
+SCRIPT_NAME=`${BASENAME} ${0}`
+
+#Extract the IP address from ifconfig:
+
+IP=$(litp /inventory/deployment1/cluster1/httpd/su_0/apache/httpd_service/ip show | ${AWK} -F: '/address/ {print $2}' | sed -e 's/^ "//'  -e 's/"$//')
+
+if [[ -z ${IP} ]]; then
+	info ${SCRIPT_NAME} "This is not the active SC"
+else	
+	if [[ $(host ${IP}) ]]; then
+		fqdn=$(${AWK} -v ip_adr=${IP} '$0 ~ ip_adr {print $2}' /etc/hosts)
+		if [[ -z ${fqdn} ]]; then
+			error ${SCRIPT_NAME} "There is no valid FQDN entry neither from nameserver nor in /etc/hosts."
+			exit 1
+		else
+			info ${SCRIPT_NAME} "There is a FQDN entry in /etc/hosts"
+			exit 0
+		fi
+	else
+		info ${SCRIPT_NAME} "Nameserver has a valid FQDN entry registered."
+		exit 0
+	fi	
+fi

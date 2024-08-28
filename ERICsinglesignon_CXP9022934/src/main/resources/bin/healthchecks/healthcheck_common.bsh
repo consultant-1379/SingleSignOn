@@ -1,0 +1,348 @@
+#!/bin/bash
+
+##
+## Copyright (c) 2013 Ericsson AB, 2013 - 2014.
+##
+## All Rights Reserved. Reproduction in whole or in part is prohibited
+## without the written consent of the copyright owner.
+##
+## ERICSSON MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE
+## SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+## BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+## FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. ERICSSON
+## SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A
+## RESULT OF USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS
+## DERIVATIVES.
+##
+##  This is a common functions script and should be sourced in by all healthcheck scripts
+##  Functions are sorted into 3 sections and in alphabetical order so any functions should follow this convention
+##  The 3 sections are:
+##       COMMON utility functions to be used by all scripts
+##       COMMON functions to be used by all teams
+##       INTERNAL functions that are used by this library only
+
+
+# UTILITIES
+
+AMF_ADM=/usr/bin/amf-adm
+AMF_FIND=/usr/bin/amf-find
+AMF_STATE=/usr/bin/amf-state
+AWK=/bin/awk
+BASENAME=/bin/basename
+CAT=/bin/cat
+CHCON=/usr/bin/chcon
+CP=/bin/cp
+CURL=/usr/bin/curl
+ECHO="echo -e"
+FIND=/bin/find
+GETENT=/usr/bin/getent
+GETSEBOOL=/usr/sbin/getsebool
+GREP=/bin/grep
+HAGRP_STATE="/opt/VRTSvcs/bin/hagrp -state"
+HASTATUS_SUM="/opt/VRTSvcs/bin/hastatus -sum"
+HEAD=/usr/bin/head
+ID=/usr/bin/id
+KILL=/bin/kill
+LITP=/usr/bin/litp
+LS=/bin/ls
+MKDIR=/bin/mkdir
+MV=/bin/mv
+RM=/bin/rm
+SED=/bin/sed
+PS=/bin/ps
+RESTORECON=/sbin/restorecon
+SED=/bin/sed
+SEMANAGE=/usr/sbin/semanage
+SETSEBOOL=/usr/sbin/setsebool
+TAIL=/usr/bin/tail
+TOUCH=/bin/touch
+WC=/usr/bin/wc
+
+
+# COMMON GLOBAL VARIABLES
+
+HOSTNAME=`hostname`
+GLOBAL_PROPERTIES=/ericsson/tor/data/global.properties
+
+
+# FILES TO SOURCE IN - THIS NEEDS TO BE MODIFED BY EACH TEAM
+
+HEALTHCHECK_CONFIG=/opt/ericsson/sso/bin/healthchecks/healthcheck.cfg
+
+
+# SOURCE IN APPROPRIATE FILES
+
+. ${HEALTHCHECK_CONFIG}
+. ${GLOBAL_PROPERTIES}
+
+
+#
+#
+# COMMON UTILITY FUNCTIONS THAT CAN BE USED BY EVERY SCRIPT
+#
+#
+
+#///////////////////////////////////////////////////////////////
+# This function will print an error message to /var/log/messages
+# Arguments:
+#       $1 - Script Name
+#       $2 - Message
+# Return: 0
+#//////////////////////////////////////////////////////////////
+error()
+{
+	logger -s -t ${TEAM_NAME} -p user.err "ERROR ( ${1} ): $2"
+}
+
+#//////////////////////////////////////////////////////////////
+# This function will print an info message to /var/log/messages
+# Arguments:
+#       $1 - Script Name
+#       $2 - Message
+# Return: 0
+#/////////////////////////////////////////////////////////////
+info()
+{
+        logger -s -t ${TEAM_NAME} -p user.notice "INFORMATION ( ${1} ): $2"
+}
+
+
+#
+#
+# COMMON FUNCTIONS THAT SHOULD BE USED BY ALL TEAMS
+#
+#
+
+#///////////////////////////////////////////////////////////////
+# This function will check if the Service Group is locked or unlocked
+# Arguments:
+#       $1 - Service Group name. For example - SSO, UI httpd etc.
+# Return: 0 if SG is UNLOCKED and 1 if it is LOCKED
+#//////////////////////////////////////////////////////////////
+check_sg_admin_state()
+{
+	if [ `${AMF_STATE} sg all | ${GREP} $1 -A1 | ${GREP} -i AdminState | ${GREP} -c UNLOCKED` -eq 1 ]; then
+        	return 0
+	else
+		return 1
+	fi
+}
+
+#///////////////////////////////////////////////////////////////
+# This function will check if the Service Instance is locked or unlocked
+# Arguments:
+#       $1 - Service Instance name. For example - SSO, UI, httpd etc.
+# Return: 0 if SI is UNLOCKED and 1 if it is LOCKED
+#//////////////////////////////////////////////////////////////
+check_si_admin_state()
+{
+	if [ `${AMF_STATE} si all | ${GREP} $1 -A2 | ${GREP} -i AdminState | ${GREP} -c UNLOCKED` -eq 1 ]; then
+        	return 0
+	else
+		return 1
+	fi
+}
+
+#///////////////////////////////////////////////////////////////
+# This function will check if the Service Instance is fully assigned
+# Arguments:
+#       $1 - Service Instance name. For example - SSO, UI, httpd etc.
+# Return: 0 if SI is FULLY_ASSIGNED and 1 if any other state
+#//////////////////////////////////////////////////////////////
+check_si_assign_state()
+{
+	if [ `${AMF_STATE} si all | ${GREP} $1 -A2 | ${GREP} -i AssignmentState | ${GREP} -c FULLY_ASSIGNED` -eq 1 ]; then
+        	return 0
+	else
+		return 1
+	fi
+}
+
+#///////////////////////////////////////////////////////////////
+# This function will check if the Service Unit is locked or unlocked
+# Arguments:
+#       $1 - Service Unit name. For example - SSO, UI, httpd etc.
+# Return: 0 if SU is UNLOCKED, 1 if it is LOCKED and 2 if problem getting availabililty model
+#//////////////////////////////////////////////////////////////
+check_su_admin_state()
+{
+	# This functions checks if SU is 2n or nway-active
+	check_avail_model $1
+
+	if [ $? -eq 0 ]; then
+		_cmw_su_name_on_this_node_=`get_su_for_2n $1`
+	elif [ $? -eq 1 ]; then
+		_cmw_su_name_on_this_node_=`get_su_for_nway $1`
+	else
+		# Problem getting availabililty model
+		return 2
+	fi
+
+	if [ `${AMF_STATE} su all ${_cmw_su_name_on_this_node_} | ${GREP} -i AdminState | ${GREP} -c UNLOCKED` -eq 1 ]; then
+        	return 0
+	else
+		return 1
+	fi
+}
+
+#///////////////////////////////////////////////////////////////
+# This function will check the Service Unit operational state
+# Arguments:
+#       $1 - Service Unit name. For example - SSO, UI, httpd etc.
+# Return: 0 if SU is ENABLED, 1 if any other state and 2 if problem getting availabililty model
+#//////////////////////////////////////////////////////////////
+check_su_oper_state()
+{
+	# This functions checks if SU is 2n or nway-active
+        check_avail_model $1
+
+        if [ $? -eq 0 ]; then
+                _cmw_su_name_on_this_node_=`get_su_for_2n $1`
+        elif [ $? -eq 1 ]; then
+                _cmw_su_name_on_this_node_=`get_su_for_nway $1`
+        else
+                # Problem getting availabililty model
+                return 2
+        fi
+
+        if [ `${AMF_STATE} su all ${_cmw_su_name_on_this_node_} | ${GREP} -i OperState | ${GREP} -c ENABLED` -eq 1 ]; then
+                return 0
+        else
+                return 1
+        fi
+}
+
+#///////////////////////////////////////////////////////////////
+# This function will check the Service Unit presence state
+# Arguments:
+#       $1 - Service Unit name. For example - SSO, UI, httpd etc.
+# Return: 0 if SU is INSTANTIATED, 1 if SU is any other state, 2 if problem getting availabililty model and 3 if SU is 2n and UNINSTANTIATED
+#//////////////////////////////////////////////////////////////
+check_su_presence_state()
+{
+	# NOTE - Check on the MS the availability model of the service as this will determine if it is valid for service to be UNINSTANTIATED
+	# It is valid for 2N service to be UNINSTANTIATED as long as it is IN-SERVICE
+
+	# This functions checks if SU is 2n or nway-active
+        check_avail_model $1
+
+        if [ $? -eq 0 ]; then
+                _cmw_su_name_on_this_node_=`get_su_for_2n $1`
+		_2n_flag_="TRUE"
+        elif [ $? -eq 1 ]; then
+                _cmw_su_name_on_this_node_=`get_su_for_nway $1`
+        else
+                # Problem getting availabililty model
+                return 2
+        fi
+
+        if [ `${AMF_STATE} su all ${_cmw_su_name_on_this_node_} | ${GREP} -i PresenceState | ${GREP} -w -c INSTANTIATED` -eq 1 ]; then
+                return 0
+        elif [ `${AMF_STATE} su all ${_cmw_su_name_on_this_node_} | ${GREP} -i PresenceState | ${GREP} -c UNINSTANTIATED` -eq 1 ]; then
+		if [[ -n ${_2n_flag_} ]]; then
+			return 3
+		else
+			return 1
+		fi
+	else
+                return 1
+        fi
+}
+
+#///////////////////////////////////////////////////////////////
+# This function will check the Service Unit readiness state
+# Arguments:
+#       $1 - Service Unit name. For example - SSO, UI, httpd etc.
+# Return: 0 if SU is IN-SERVICE, 1 if any other state and 2 if problem getting availabililty model
+#//////////////////////////////////////////////////////////////
+check_su_ready_state()
+{
+	# This functions checks if SU is 2n or nway-active
+        check_avail_model $1
+
+        if [ $? -eq 0 ]; then
+                _cmw_su_name_on_this_node_=`get_su_for_2n $1`
+        elif [ $? -eq 1 ]; then
+                _cmw_su_name_on_this_node_=`get_su_for_nway $1`
+        else
+                # Problem getting availabililty model
+                return 2
+        fi
+
+        if [ `${AMF_STATE} su all ${_cmw_su_name_on_this_node_} | ${GREP} -i ReadinessState | ${GREP} -c IN-SERVICE` -eq 1 ]; then
+                return 0
+        else
+                return 1
+        fi
+}
+
+
+#
+#
+# FUNCTIONS THAT ARE FOR INTERNAL USE TO THIS LIBRARY ONLY
+#
+#
+
+#///////////////////////////////////////////////////////////////
+# This function will find out if SU passed in is 2n or nway-active
+# Arguments:
+#       $1 - Name of SU
+# Return: 0 if 2n, 1 if nway-active or 2 if there is a problem getting the availability_model
+#//////////////////////////////////////////////////////////////
+check_avail_model()
+{
+        _avail_model_=$(${LITP} /inventory/deployment1/cluster1/$1 property availability_model | grep availability_model)
+
+	if [ `${ECHO} ${_avail_model_} | ${GREP} -c 2n` -eq 1 ]; then
+		return 0
+	elif [ `${ECHO} ${_avail_model_} | ${GREP} -c nway-active` -eq 1 ]; then
+		return 1
+	else
+		return 2
+	fi
+}
+
+#///////////////////////////////////////////////////////////////
+# This function is used to return the full CMW name for a 2n SU on this node
+# NOTE - This function will need to be improved in future. Currently only assumes 2 SC nodes
+# Arguments:
+#       $1 - Script Name
+# Return: Name of SU
+#//////////////////////////////////////////////////////////////
+get_su_for_2n()
+{
+	if [ `${HAGRP_STATE} | ${AWK} -v host=${HOSTNAME} -v su_name=$1 '$0 ~ host && $0 ~ su_name' | ${GREP} -m 1 -c ONLINE` -eq 1 ]; then
+		# Find out the CMW name of the SU by checking all of the CMW instances for this SU to see which one is INSTANTIATED
+		for su in `${AMF_FIND} su all | ${GREP} $1`; do
+			if [ `${AMF_STATE} su all $su | ${GREP} -w -c INSTANTIATED` -eq 1 ]; then
+				_cmw_su_name_on_this_node_=$su
+				break
+			fi
+		done
+	else
+		# Find out the CMW name of the SU by checking all of the CMW instances for this SU to see which one is UNINSTANTIATED
+		for su in `${AMF_FIND} su all | ${GREP} $1`; do
+			if [ `${AMF_STATE} su all $su | ${GREP} -c UNINSTANTIATED` -eq 1 ]; then
+				_cmw_su_name_on_this_node_=$su
+				break
+			fi
+		done
+	fi
+
+	${ECHO} ${_cmw_su_name_on_this_node_}
+}
+
+#///////////////////////////////////////////////////////////////
+# This function is used to return the full CMW name for an nway-active SU on this node
+# Arguments:
+#       $1 - Script Name
+# Return: Name of SU
+#//////////////////////////////////////////////////////////////
+get_su_for_nway()
+{
+	_cmw_su_number_on_this_node_=$(${HAGRP_STATE} | ${AWK} -v host=${HOSTNAME} -v su_name=$1 '$0 ~ host && $0 ~ su_name && /ONLINE/ {gsub(/[^0-9]/,"",$1);print $1}')
+
+	_cmw_su_name_on_this_node_=$(${AMF_FIND} su all | ${AWK} -v su_num=${_cmw_su_number_on_this_node_} -v su_name=$1 '$0 ~ su_name && $0 ~ su_num')
+
+	${ECHO} ${_cmw_su_name_on_this_node_}
+}

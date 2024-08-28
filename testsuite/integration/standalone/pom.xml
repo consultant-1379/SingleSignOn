@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>SingleSignOn-testsuite-integration</artifactId>
+		<groupId>com.ericsson.nms.sso</groupId>
+		<version>1.5.46-SNAPSHOT</version>
+	</parent>
+	<artifactId>SingleSignOn-testsuite-integration-standalone</artifactId>
+	<name>[${project.parent.artifactId}] TestSuite Integration Standalone</name>
+
+	<dependencies>
+<!-- 		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>SingleSignOn-api</artifactId>
+			<version>1.7.4-SNAPSHOT-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>SingleSignOn-jar</artifactId>
+			<version>1.7.4-SNAPSHOT-SNAPSHOT</version>
+		</dependency>
+ -->		<dependency>
+			<groupId>org.jboss.arquillian.container</groupId>
+			<artifactId>arquillian-weld-se-embedded-1.1</artifactId>
+			<scope>test</scope>
+			<version>${version.arquillian-weld-se-embedded}</version>
+		</dependency>
+	</dependencies>
+	<profiles>
+		<!-- 
+			skip tests
+		 -->
+		<profile>
+			<id>skip_standalone</id>
+			<activation>
+				<property><name>ts.skip.integration.standalone</name></property>
+			</activation>
+			<properties>
+				<maven.test.skip>true</maven.test.skip>
+			</properties>
+		</profile>
+	</profiles>
+	
+</project>
